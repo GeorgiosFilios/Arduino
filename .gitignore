@@ -1,32 +1,83 @@
-# Prerequisites
-*.d
+#include <LiquidCrystal.h>
+#include <Servo.h>
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+Servo Myservo;
+int motorPin = 6;
+int tempPin = A0;
+int celsius = 0;
+int maxTemp = 0;
+int minTemp = 0;
+int speed = 0;
+int luminosity = 0;
+int lightPin = A1;
 
-# Precompiled Headers
-*.gch
-*.pch
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
 
-# Fortran module files
-*.mod
-*.smod
+void setup()
+{
+  lcd.begin(16, 2); //use 16 rows and 2 columns on the LED screen
+  Myservo.write(0); //Initial position of the servo motor
+  Myservo.attach(A5);
+  pinMode(motorPin, OUTPUT);
+  pinMode(tempPin, INPUT);
+  pinMode(lightPin, INPUT);
+  Serial.begin(9600);
+  while (! Serial);
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+}
 
-# Executables
-*.exe
-*.out
-*.app
+void loop() {
+  
+  luminosity = analogRead(A1); //read luminocity from the phototransistor
+  
+  if (luminosity <235 && luminosity >=0) {
+    Myservo.write(0);
+    
+  } else if (luminosity >= 235 && luminosity <=471) {
+    
+    Myservo.write(90);
+  
+    
+   }
+  
+  
+   minTemp = 15;
+   maxTemp = 35;
+  
+  celsius = map(((analogRead(A0) - 20) * 3.04), 0, 1023, -40, 125); //get temperature from the analogue signal
+  if (celsius < minTemp) {
+    analogWrite(motorPin, 0);
+    
+  } else if (celsius >= minTemp && celsius <= maxTemp) {
+    speed = map(celsius, minTemp, maxTemp, 0, 255); 
+    analogWrite(motorPin, speed);
+    
+  } else {
+    analogWrite(motorPin, 255);
+    
+  }
+  
+    
+  lcd.setCursor(0,0); //use the first row of the LED screen
+  lcd.print("Temperature:");
+   lcd.print(celsius);
+    lcd.print("C");
+  
+   lcd.setCursor(0,1); //use the second row of the LED screen
+  lcd.print("Luminosity:");
+   lcd.print(luminosity);
+  
+  Serial.print("Temperature:");
+  Serial.print(celsius);
+  Serial.print("C, ");
+  Serial.print("Speed:");
+  Serial.print(speed);
+  Serial.println();
+  
+  Serial.print("Luminosity:");
+  Serial.print(luminosity);
+  Serial.println();
+  
+  delay(1000);
+}
